@@ -2,6 +2,7 @@ import random
 from typing import Any
 from fastapi import FastAPI, HTTPException
 from scalar_fastapi import get_scalar_api_reference
+from schemas import Shipment, ShipmentCreate, ShipmentUpdate, TrackingHistoryItem
 
 app = FastAPI()
 
@@ -180,59 +181,62 @@ shipments: dict[int, dict[str, Any]] = {
 
 
 @app.get("/shipment/latest")
-def get_latest_shipment() -> dict[str, Any]:
-    return shipments[max(shipments.keys())]
+def get_latest_shipment() -> Shipment:
+    return Shipment(**shipments[max(shipments.keys())])
 
 
 @app.get("/shipment/{shipment_id}")
-def get_shipment(shipment_id: int) -> dict[str, Any]:
+def get_shipment(shipment_id: int) -> Shipment:
     if shipment_id not in shipments:
         raise HTTPException(status_code=404, detail="Shipment not found")
-    return shipments[shipment_id]
+    return Shipment(**shipments[shipment_id])
 
 @app.post("/shipment")
-def create_shipment(shipment: dict[str, Any]) -> dict[str, Any]:
+def create_shipment(shipment: ShipmentCreate) -> Shipment:
     new_id = max(shipments.keys()) + 1 if shipments else 1
     tracking_number = random.randint(1000000000, 9999999999)
-    new_shipment = {
-        "tracking_number": tracking_number,
-        "content": shipment["content"],
-        "status": "in transit",
-        "carrier": shipment["carrier"],
-        "estimated_delivery": "2026-01-31",
-        "current_location": "New York, NY",
-        "destination": shipment["destination"],
-        "shipment_date": "2026-01-29",
-        "delivery_date": None,
-        "tracking_url": "https://www.ups.com/track?tracking_number=" + str(tracking_number),
-        "tracking_status": "in transit",
-        "tracking_history": [
-            {
-                "date": "2026-01-29",
-                "location": "New York, NY",
-                "status": "in transit",
-            },
+    new_shipment = Shipment(
+        tracking_number=tracking_number,
+        content=shipment.content,
+        status="in transit",
+        carrier=shipment.carrier,
+        estimated_delivery="2026-01-31",
+        current_location="New York, NY",
+        destination=shipment.destination,
+        shipment_date="2026-01-29",
+        delivery_date=None,
+        tracking_url=f"https://www.ups.com/track?tracking_number={tracking_number}",
+        tracking_status="in transit",
+        tracking_history=[
+            TrackingHistoryItem(
+                date="2026-01-29",
+                location="New York, NY",
+                status="in transit",
+            ),
         ],
-    }
-    shipments[new_id] = new_shipment
+    )
+    shipments[new_id] = new_shipment.model_dump()
     return new_shipment
 
 @app.put("/shipment/{shipment_id}")
-def update_shipment(shipment_id: int, shipment: dict[str, Any]) -> dict[str, Any]:
+def update_shipment(shipment_id: int, shipment: Shipment) -> Shipment:
     if shipment_id not in shipments:
         raise HTTPException(status_code=404, detail="Shipment not found")
-    shipments[shipment_id] = shipment
-    return shipments[shipment_id]
+    shipments[shipment_id] = shipment.model_dump()
+    return shipment
 
 @app.patch("/shipment/{shipment_id}")
-def patch_shipment(shipment_id: int, shipment: dict[str, Any]) -> dict[str, Any]:
+def patch_shipment(shipment_id: int, shipment: ShipmentUpdate) -> Shipment:
     if shipment_id not in shipments:
         raise HTTPException(status_code=404, detail="Shipment not found")
-    shipments[shipment_id].update(shipment)
-    return shipments[shipment_id]
+    current_shipment = Shipment(**shipments[shipment_id])
+    update_data = shipment.model_dump(exclude_unset=True)
+    updated_shipment = current_shipment.model_copy(update=update_data)
+    shipments[shipment_id] = updated_shipment.model_dump()
+    return updated_shipment
 
 @app.delete("/shipment/{shipment_id}")
-def delete_shipment(shipment_id: int) -> dict[str, Any]:
+def delete_shipment(shipment_id: int) -> dict[str, str]:
     if shipment_id not in shipments:
         raise HTTPException(status_code=404, detail="Shipment not found")
     del shipments[shipment_id]
