@@ -189,6 +189,31 @@ def get_shipment(tracking_number: int) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail="Shipment not found")
     return shipments[tracking_number]
 
+@app.post("/shipment")
+def create_shipment(shipment: dict[str, Any]) -> dict[str, Any]:
+    new_shipment = {
+        "tracking_number": len(shipments) + 1,
+        "content": shipment["content"],
+        "status": "in transit",
+        "carrier": shipment["carrier"],
+        "estimated_delivery": "2026-01-31",
+        "current_location": "New York, NY",
+        "destination": shipment["destination"],
+        "shipment_date": "2026-01-29",
+        "delivery_date": None,
+        "tracking_url": "https://www.ups.com/track?tracking_number=" + str(new_shipment["tracking_number"]),
+        "tracking_status": "in transit",
+        "tracking_history": [
+            {
+                "date": "2026-01-29",
+                "location": "New York, NY",
+                "status": "in transit",
+            },
+        ],
+    }
+    shipments[new_shipment["tracking_number"]] = new_shipment
+    return new_shipment
+
 
 @app.get("/scalar", include_in_schema=False)
 async def scalar_html():
