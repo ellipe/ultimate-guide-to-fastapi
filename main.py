@@ -2,7 +2,7 @@ import random
 from typing import Any
 from fastapi import FastAPI, HTTPException
 from scalar_fastapi import get_scalar_api_reference
-from schemas import Shipment, ShipmentCreate, ShipmentUpdate, TrackingHistoryItem
+from schemas import Shipment, ShipmentCreate, ShipmentUpdate, TrackingHistoryItem, MessageResponse
 
 app = FastAPI()
 
@@ -180,18 +180,18 @@ shipments: dict[int, dict[str, Any]] = {
 }
 
 
-@app.get("/shipment/latest")
+@app.get("/shipment/latest", response_model=Shipment)
 def get_latest_shipment() -> Shipment:
     return Shipment(**shipments[max(shipments.keys())])
 
 
-@app.get("/shipment/{shipment_id}")
+@app.get("/shipment/{shipment_id}", response_model=Shipment)
 def get_shipment(shipment_id: int) -> Shipment:
     if shipment_id not in shipments:
         raise HTTPException(status_code=404, detail="Shipment not found")
     return Shipment(**shipments[shipment_id])
 
-@app.post("/shipment")
+@app.post("/shipment", response_model=Shipment)
 def create_shipment(shipment: ShipmentCreate) -> Shipment:
     new_id = max(shipments.keys()) + 1 if shipments else 1
     tracking_number = random.randint(1000000000, 9999999999)
@@ -218,14 +218,14 @@ def create_shipment(shipment: ShipmentCreate) -> Shipment:
     shipments[new_id] = new_shipment.model_dump()
     return new_shipment
 
-@app.put("/shipment/{shipment_id}")
+@app.put("/shipment/{shipment_id}", response_model=Shipment)
 def update_shipment(shipment_id: int, shipment: Shipment) -> Shipment:
     if shipment_id not in shipments:
         raise HTTPException(status_code=404, detail="Shipment not found")
     shipments[shipment_id] = shipment.model_dump()
     return shipment
 
-@app.patch("/shipment/{shipment_id}")
+@app.patch("/shipment/{shipment_id}", response_model=Shipment)
 def patch_shipment(shipment_id: int, shipment: ShipmentUpdate) -> Shipment:
     if shipment_id not in shipments:
         raise HTTPException(status_code=404, detail="Shipment not found")
@@ -235,12 +235,12 @@ def patch_shipment(shipment_id: int, shipment: ShipmentUpdate) -> Shipment:
     shipments[shipment_id] = updated_shipment.model_dump()
     return updated_shipment
 
-@app.delete("/shipment/{shipment_id}")
-def delete_shipment(shipment_id: int) -> dict[str, str]:
+@app.delete("/shipment/{shipment_id}", response_model=MessageResponse)
+def delete_shipment(shipment_id: int) -> MessageResponse:
     if shipment_id not in shipments:
         raise HTTPException(status_code=404, detail="Shipment not found")
     del shipments[shipment_id]
-    return {"message": "Shipment deleted successfully"}
+    return MessageResponse(message="Shipment deleted successfully")
 
 @app.get("/scalar", include_in_schema=False)
 async def scalar_html():

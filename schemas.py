@@ -29,6 +29,10 @@ class ShipmentCreate(BaseModel):
     destination: str
 
 
+class MessageResponse(BaseModel):
+    message: str
+
+
 # Create a partial model where all fields from Shipment are optional
 # This is cleaner than manually listing all Optional fields
 # Using Pydantic's model creation to automatically generate optional fields
