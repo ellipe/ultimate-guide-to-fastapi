@@ -1,3 +1,4 @@
+import random
 from typing import Any
 from fastapi import FastAPI, HTTPException
 from scalar_fastapi import get_scalar_api_reference
@@ -5,7 +6,7 @@ from scalar_fastapi import get_scalar_api_reference
 app = FastAPI()
 
 shipments: dict[int, dict[str, Any]] = {
-    1234567890: {
+    1: {
         "tracking_number": 1234567890,
         "content": "wooden table",
         "status": "in transit",
@@ -25,7 +26,7 @@ shipments: dict[int, dict[str, Any]] = {
             },
         ],
     },
-    2345678901: {
+    2: {
         "tracking_number": 2345678901,
         "content": "electronics package",
         "status": "delivered",
@@ -55,7 +56,7 @@ shipments: dict[int, dict[str, Any]] = {
             },
         ],
     },
-    3456789012: {
+    3: {
         "tracking_number": 3456789012,
         "content": "furniture set",
         "status": "pending",
@@ -75,7 +76,7 @@ shipments: dict[int, dict[str, Any]] = {
             },
         ],
     },
-    4567890123: {
+    4: {
         "tracking_number": 4567890123,
         "content": "clothing order",
         "status": "in transit",
@@ -100,7 +101,7 @@ shipments: dict[int, dict[str, Any]] = {
             },
         ],
     },
-    5678901234: {
+    5: {
         "tracking_number": 5678901234,
         "content": "books collection",
         "status": "delivered",
@@ -130,7 +131,7 @@ shipments: dict[int, dict[str, Any]] = {
             },
         ],
     },
-    6789012345: {
+    6: {
         "tracking_number": 6789012345,
         "content": "appliance delivery",
         "status": "in transit",
@@ -150,7 +151,7 @@ shipments: dict[int, dict[str, Any]] = {
             },
         ],
     },
-    7890123456: {
+    7: {
         "tracking_number": 7890123456,
         "content": "sports equipment",
         "status": "delivered",
@@ -183,16 +184,18 @@ def get_latest_shipment() -> dict[str, Any]:
     return shipments[max(shipments.keys())]
 
 
-@app.get("/shipment/{tracking_number}")
-def get_shipment(tracking_number: int) -> dict[str, Any]:
-    if tracking_number not in shipments:
+@app.get("/shipment/{shipment_id}")
+def get_shipment(shipment_id: int) -> dict[str, Any]:
+    if shipment_id not in shipments:
         raise HTTPException(status_code=404, detail="Shipment not found")
-    return shipments[tracking_number]
+    return shipments[shipment_id]
 
 @app.post("/shipment")
 def create_shipment(shipment: dict[str, Any]) -> dict[str, Any]:
+    new_id = max(shipments.keys()) + 1 if shipments else 1
+    tracking_number = random.randint(1000000000, 9999999999)
     new_shipment = {
-        "tracking_number": len(shipments) + 1,
+        "tracking_number": tracking_number,
         "content": shipment["content"],
         "status": "in transit",
         "carrier": shipment["carrier"],
@@ -201,7 +204,7 @@ def create_shipment(shipment: dict[str, Any]) -> dict[str, Any]:
         "destination": shipment["destination"],
         "shipment_date": "2026-01-29",
         "delivery_date": None,
-        "tracking_url": "https://www.ups.com/track?tracking_number=" + str(new_shipment["tracking_number"]),
+        "tracking_url": "https://www.ups.com/track?tracking_number=" + str(tracking_number),
         "tracking_status": "in transit",
         "tracking_history": [
             {
@@ -211,9 +214,29 @@ def create_shipment(shipment: dict[str, Any]) -> dict[str, Any]:
             },
         ],
     }
-    shipments[new_shipment["tracking_number"]] = new_shipment
+    shipments[new_id] = new_shipment
     return new_shipment
 
+@app.put("/shipment/{shipment_id}")
+def update_shipment(shipment_id: int, shipment: dict[str, Any]) -> dict[str, Any]:
+    if shipment_id not in shipments:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+    shipments[shipment_id] = shipment
+    return shipments[shipment_id]
+
+@app.patch("/shipment/{shipment_id}")
+def patch_shipment(shipment_id: int, shipment: dict[str, Any]) -> dict[str, Any]:
+    if shipment_id not in shipments:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+    shipments[shipment_id].update(shipment)
+    return shipments[shipment_id]
+
+@app.delete("/shipment/{shipment_id}")
+def delete_shipment(shipment_id: int) -> dict[str, Any]:
+    if shipment_id not in shipments:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+    del shipments[shipment_id]
+    return {"message": "Shipment deleted successfully"}
 
 @app.get("/scalar", include_in_schema=False)
 async def scalar_html():
