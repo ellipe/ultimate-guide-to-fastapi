@@ -9,6 +9,7 @@ class TrackingHistoryItem(BaseModel):
 
 
 class Shipment(BaseModel):
+    id: int
     tracking_number: int
     content: str
     status: str
