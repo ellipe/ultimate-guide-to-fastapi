@@ -1,26 +1,30 @@
+import uuid
 from pydantic import BaseModel, create_model
 from typing import Optional, get_origin, get_args
 
+from database.models import ShipmentStatus
+from datetime import datetime
+
 
 class TrackingHistoryItem(BaseModel):
-    date: str
+    date: datetime
     location: str
-    status: str
+    status: ShipmentStatus
 
 
 class Shipment(BaseModel):
-    id: int
-    tracking_number: int
+    id: uuid.UUID
+    tracking_number: str
     content: str
-    status: str
+    status: ShipmentStatus
     carrier: str
-    estimated_delivery: str
+    estimated_delivery: datetime
     current_location: str
     destination: str
-    shipment_date: str
-    delivery_date: Optional[str]
+    shipment_date: datetime
+    delivery_date: Optional[datetime]
     tracking_url: str
-    tracking_status: str
+    tracking_status: ShipmentStatus
     tracking_history: list[TrackingHistoryItem]
 
 

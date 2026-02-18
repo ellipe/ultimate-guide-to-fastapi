@@ -1,4 +1,5 @@
 from typing import List
+import uuid
 from fastapi import FastAPI, HTTPException
 from scalar_fastapi import get_scalar_api_reference
 from schemas import Shipment, ShipmentCreate, ShipmentUpdate, MessageResponse
@@ -9,7 +10,7 @@ db = Database()
 
 
 @app.get("/shipments/{id}", response_model=Shipment)
-def get_shipment(id: int) -> Shipment:
+def get_shipment(id: uuid.UUID) -> Shipment:
     shipment = db.get_shipment(id)
     if shipment is None:
         raise HTTPException(status_code=404, detail="Shipment not found")
@@ -25,17 +26,17 @@ def create_shipment(shipment: ShipmentCreate) -> Shipment:
     return Shipment(**created)
 
 @app.put("/shipments/{id}", response_model=Shipment)
-def update_shipment(id: int, shipment: ShipmentUpdate) -> Shipment:
+def update_shipment(id: uuid.UUID, shipment: ShipmentUpdate) -> Shipment:
     updated_shipment = db.update_shipment(id, shipment)
     return Shipment(**updated_shipment)
 
 @app.patch("/shipments/{id}", response_model=Shipment)
-def patch_shipment(id: int, shipment: ShipmentUpdate) -> Shipment:
+def patch_shipment(id: uuid.UUID, shipment: ShipmentUpdate) -> Shipment:
     updated_shipment = db.update_shipment(id, shipment)
     return Shipment(**updated_shipment)
 
 @app.delete("/shipments/{id}", response_model=MessageResponse)
-def delete_shipment(id: int) -> MessageResponse:
+def delete_shipment(id: uuid.UUID) -> MessageResponse:
     db.delete_shipment(id)
     return MessageResponse(message="Shipment deleted successfully")
 
