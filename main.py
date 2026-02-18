@@ -4,9 +4,12 @@ from fastapi import FastAPI, HTTPException
 from scalar_fastapi import get_scalar_api_reference
 from schemas import Shipment, ShipmentCreate, ShipmentUpdate, MessageResponse
 from database import Database
+from database.init_db import init_db
 
 app = FastAPI()
 db = Database()
+
+init_db()
 
 
 @app.get("/shipments/{id}", response_model=Shipment)
